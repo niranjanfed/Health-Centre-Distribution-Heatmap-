@@ -1,0 +1,67 @@
+This code is a Python script that reads a CSV file containing data about health centers, performs spatial analysis using H3 hexagons, and creates a choropleth map to visualize the distribution of health centers in Bhubaneswar, Odisha, India. The code uses various libraries such as Pandas, Geopandas, H3, and Plotly Express to achieve these tasks. Here's a step-by-step explanation of the code:
+
+1. Import necessary libraries:
+
+   - `pandas`: For working with data in tabular format.
+   - `geopandas`: For working with geospatial data, such as geometries.
+   - `shapely.geometry`: For creating geometric shapes.
+   - `h3`: For working with H3 hexagons, a grid system used for spatial analysis.
+   - `plotly.express`: For creating interactive maps and visualizations.
+
+2. Read the CSV file:
+
+   - The script reads the CSV file containing health center data using `pd.read_csv()`. The `encoding` parameter is set to 'utf-8' to handle character encoding.
+
+3. Select and rename columns:
+
+   - A subset of columns from the DataFrame is selected, and their names are renamed to make the code more readable. The columns contain information about the health centers' names, neighborhoods, districts, and geographical coordinates.
+
+4. Extract health center names:
+
+   - The health center names are extracted by splitting the original names on the ' - ' delimiter and keeping only the first part. This step ensures consistent naming for the health centers.
+
+5. Define the `get_hexagon_grid` function:
+
+   - This function generates a grid of H3 hexagons around a specified latitude and longitude. The grid parameters include the central point's coordinates, H3 hexagon resolution, and a ring size indicating how many concentric rings of hexagons should be generated around the central hexagon.
+
+6. Set the latitude, longitude, resolution, and ring size:
+
+   - Latitude and longitude coordinates for the center of Bhubaneswar are specified.
+   - The H3 hexagon resolution and ring size are set. Higher resolution results in smaller hexagons, while a larger ring size generates more extended hexagons around the center.
+
+7. Generate the H3 hexagon grid:
+
+   - The `get_hexagon_grid` function is called to generate the H3 hexagon grid around Bhubaneswar based on the specified parameters.
+
+8. Define the `calculate_hexagon_ids` function:
+
+   - This function assigns each health center to a hexagon in the grid by checking if the center's coordinates are within each hexagon's geometry. The assigned hexagon IDs are added to the DataFrame.
+
+9. Calculate Hexagon IDs:
+
+   - The `calculate_hexagon_ids` function is used to assign each health center to a hexagon in the grid based on its geographical coordinates.
+
+10. Group and aggregate the data:
+
+    - The script groups the data by Hexagon_ID and calculates the count of health centers and concatenates their names within each hexagon.
+
+11. Rename columns for clarity:
+
+    - The column names in the grouped DataFrame are renamed for clarity.
+
+12. Define the `create_choropleth_map` function:
+
+    - This function creates an interactive choropleth map using Plotly Express. The map visualizes the distribution of health centers based on their assigned hexagon IDs.
+
+13. Customize the choropleth map:
+
+    - The merged GeoJSON data and DataFrame are used to create the map.
+    - The color of the hexagons is based on the count of health centers within each hexagon.
+    - The opacity, hover data, and hover template are customized to improve the map's interactivity.
+    - Margins and width are adjusted for the layout.
+
+14. Call the `create_choropleth_map` function:
+
+    - The script calls the `create_choropleth_map` function with the hexagon grid and grouped health center data to create and display the choropleth map.
+
+Overall, this code reads health center data, assigns each health center to an H3 hexagon, and visualizes the distribution of health centers in Bhubaneswar using an interactive choropleth map. It can be useful for analyzing and visualizing the spatial distribution of health centers in the area.
