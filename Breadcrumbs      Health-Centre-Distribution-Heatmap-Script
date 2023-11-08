@@ -1,0 +1,119 @@
+import pandas as pd
+import geopandas as gpd
+import shapely.geometry
+import h3
+import plotly.express as px
+
+# Read the CSV file into a Pandas DataFrame
+file_path = 'health_centers.csv'
+df = pd.read_csv(file_path, encoding='utf-8')
+
+# Define a list of column names to select
+selected_column_names = ['name', 'addresses_neighborhood_name', 'addresses_district_name', 'geo_epgs_4326_x', 'geo_epgs_4326_y']
+
+# Select the specified columns from the DataFrame
+df = df[selected_column_names]
+
+# Define a dictionary to map the old column names to the new names
+column_name_mapping = {
+    'name': 'Name',
+    'addresses_neighborhood_name': 'Neighborhood',
+    'addresses_district_name': 'District',
+    'geo_epgs_4326_x': 'Latitude',
+    'geo_epgs_4326_y': 'Longitude'
+}
+
+# Use the rename method to rename the columns
+df.rename(columns=column_name_mapping, inplace=True)
+
+# Extract the name of the health center
+df['Name'] = df['Name'].str.split(' - ').str[0]
+
+# Define the get_hexagon_grid function
+def get_hexagon_grid(latitude, longitude, resolution, ring_size):
+    # Get the H3 hexagons covering the specified location
+    center_h3 = h3.geo_to_h3(latitude, longitude, resolution)
+    hexagons = list(h3.k_ring(center_h3, ring_size))  # Convert the set to a list
+
+    # Create a GeoDataFrame with hexagons and their corresponding geometries
+    hexagon_geometries = [shapely.geometry.Polygon(h3.h3_to_geo_boundary(hexagon, geo_json=True)) for hexagon in hexagons]
+    hexagon_df = gpd.GeoDataFrame({'Hexagon_ID': hexagons, 'geometry': hexagon_geometries})
+
+    return hexagon_df
+
+# Latitude and longitude coordinates for the center of Bhubaneswar
+bhubaneswar_lat = 20.296
+bhubaneswar_lng = 85.824
+
+# Generate H3 hexagons at a specified resolution (e.g., 9)
+resolution = 9
+
+# Indicate the number of rings around the central hexagon
+ring_size = 45
+
+# Hexagon grid around Bhubaneswar
+hexagon_df = get_hexagon_grid(bhubaneswar_lat, bhubaneswar_lng, resolution, ring_size)
+
+# Define the calculate_hexagon_ids function
+def calculate_hexagon_ids(df, hexagon_df):
+    # Create a column Hexagon_ID with the ID of the hexagon
+    df['Hexagon_ID'] = None
+
+    # Iterate through the health centers in the df DataFrame and calculate health center counts within each hexagon
+    for i, health_center in df.iterrows():
+        point = shapely.geometry.Point(health_center["Longitude"], health_center["Latitude"])
+        for _, row in hexagon_df.iterrows():
+            if point.within(row['geometry']):
+                df.loc[i, 'Hexagon_ID'] = row['Hexagon_ID']
+
+    return df
+
+# Use the function to calculate the Hexagon IDs for health centers
+df = calculate_hexagon_ids(df, hexagon_df)
+
+# Group by Hexagon_ID and perform the operations
+grouped_df = df.groupby('Hexagon_ID').agg({
+    'Name': ['count', '<br>'.join]
+}).reset_index()
+
+# Rename columns for clarity
+grouped_df.columns = ['Hexagon_ID', 'Count', 'Health Centers']
+
+# Define the create_choropleth_map function
+def create_choropleth_map(geojson_df, data_df, alpha=0.4, map_style="carto-positron", color_scale="Viridis"):
+    # Merge the GeoJSON data with your DataFrame
+    merged_df = geojson_df.merge(data_df, on="Hexagon_ID", how="left")
+
+    # Create a choropleth map using px.choropleth_mapbox
+    fig = px.choropleth_mapbox(
+        merged_df,
+        geojson=merged_df.geometry,
+        locations=merged_df.index,  # Use index as locations to avoid duplicate rows
+        color="Count",
+        color_continuous_scale=color_scale,
+        title="Health Center Distribution Heatmap in Bhubaneswar",
+        mapbox_style=map_style,
+        center={"lat": 20.296, "lon": 85.824},  # Adjust the center as needed
+        zoom=11.5,
+    )
+
+    # Customize the opacity of the hexagons
+    fig.update_traces(marker=dict(opacity=alpha))
+
+    # Add hover data for health center names
+    fig.update_traces(customdata=merged_df["Health Centers"])
+
+    # Define the hover template
+    hover_template = "<b>Health Centers:</b> %{customdata}<extra></extra>"
+    fig.update_traces(hovertemplate=hover_template)
+
+    # Set margins to 25 on all sides
+    fig.update_layout(margin=dict(l=35, r=35, t=45, b=35))
+
+    # Adjust the width of the visualization
+    fig.update_layout(width=1000)
+
+    fig.show()
+
+# Call the function with your GeoJSON and DataFrame
+create_choropleth_map(geojson_df=hexagon_df, data_df=grouped_df)
