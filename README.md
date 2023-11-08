@@ -1,4 +1,7 @@
 # Health-Centre-Distribution-Heatmap-
+<img width="976" alt="Screenshot 2023-11-08 at 11 01 11 PM" src="https://github.com/niranjanfed/Health-Centre-Distribution-Heatmap-/assets/16320576/c6f1fb2c-34f7-4454-b6c9-264f7f1cedae">
+
+
 This GitHub repository contains Python code for generating a heatmap of health center distribution in Bhubaneswar, Odisha, India. The code processes health center data from a CSV file, performs spatial analysis using H3 hexagons, and visualizes the distribution on a map using Plotly Express and Geopandas
 
 Key Features:
