@@ -9,7 +9,7 @@ file_path = 'health_centers.csv'
 df = pd.read_csv(file_path, encoding='utf-8')
 
 # Define a list of column names to select
-selected_column_names = ['name', 'addresses_neighborhood_name', 'addresses_district_name', 'geo_epgs_4326_x', 'geo_epgs_4326_y']
+selected_column_names = ['name', 'addresses_neighborhood_name', 'addresses_district_name', 'latitude', 'longitude']
 
 # Select the specified columns from the DataFrame
 df = df[selected_column_names]
@@ -19,8 +19,8 @@ column_name_mapping = {
     'name': 'Name',
     'addresses_neighborhood_name': 'Neighborhood',
     'addresses_district_name': 'District',
-    'geo_epgs_4326_x': 'Latitude',
-    'geo_epgs_4326_y': 'Longitude'
+    'latitude': 'Latitude',
+    'longitude': 'Longitude'
 }
 
 # Use the rename method to rename the columns
